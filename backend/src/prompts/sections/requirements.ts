@@ -1,7 +1,10 @@
 import type { GenerateRequest } from '@krd-tool/shared'
 
 export function buildRequirementsPrompt(request: GenerateRequest): string {
-  const surfacesList = request.surfaces.map((s) => `  - ${s}`).join('\n')
+  const selectedSurfaces = request.profileSnapshot.surfaces.filter((s) =>
+    request.selectedSurfaceIds.includes(s.id),
+  )
+  const surfacesList = selectedSurfaces.map((s) => `  - ${s.name}`).join('\n')
 
   return `Write the Functional Requirements section of a Key Requirements Document for the feature described below.
 

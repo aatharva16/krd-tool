@@ -6,7 +6,7 @@ export function buildTestingPrompt(request: GenerateRequest): string {
 Feature Name: ${request.featureName}
 Proposed Solution: ${request.proposedSolution}
 V0 Scope: ${request.v0Scope}
-Technical Constraints: ${request.techConstraints || 'None specified.'}
+Technical Constraints: ${request.profileSnapshot.techConstraints || 'None specified.'}
 
 Output the section with exactly these four categories. Each category must have at least 3 checklist items. Write each item as a checkbox: "- [ ] [test description]"
 

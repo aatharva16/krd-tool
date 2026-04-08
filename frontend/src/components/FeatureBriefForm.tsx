@@ -1,16 +1,22 @@
+import type { Surface, Persona } from '@krd-tool/shared'
+
 const CHAR_LIMIT = 400
 
-interface FeatureBriefFormState {
+export interface FeatureBriefFormState {
   featureName: string
   problemStatement: string
   proposedSolution: string
   v0Scope: string
   v1Scope: string
+  selectedSurfaceIds: string[]
+  selectedPersonaIds: string[]
 }
 
 interface Props {
   values: FeatureBriefFormState
   onChange: (values: FeatureBriefFormState) => void
+  surfaces: Surface[]
+  personas: Persona[]
   disabled: boolean
 }
 
@@ -24,7 +30,44 @@ function CharCounter({ value, limit }: { value: string; limit: number }) {
   )
 }
 
-export function FeatureBriefForm({ values, onChange, disabled }: Props) {
+function MultiCheckbox({
+  items,
+  selectedIds,
+  onToggle,
+  disabled,
+}: {
+  items: { id: string; label: string }[]
+  selectedIds: string[]
+  onToggle: (id: string) => void
+  disabled: boolean
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="text-xs text-gray-400 italic">
+        No items in active profile — add them in{' '}
+        <a href="/profiles" className="underline hover:text-gray-600">Profiles</a>.
+      </p>
+    )
+  }
+  return (
+    <div className="flex flex-col gap-1.5">
+      {items.map((item) => (
+        <label key={item.id} className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            disabled={disabled}
+            checked={selectedIds.includes(item.id)}
+            onChange={() => onToggle(item.id)}
+            className="rounded border-gray-300 text-gray-900 focus:ring-gray-400 disabled:cursor-not-allowed"
+          />
+          <span className="text-sm text-gray-700">{item.label}</span>
+        </label>
+      ))}
+    </div>
+  )
+}
+
+export function FeatureBriefForm({ values, onChange, surfaces, personas, disabled }: Props) {
   function update(field: keyof FeatureBriefFormState) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const raw = e.target.value
@@ -34,6 +77,26 @@ export function FeatureBriefForm({ values, onChange, disabled }: Props) {
       onChange({ ...values, [field]: limited })
     }
   }
+
+  function toggleSurface(id: string) {
+    const next = values.selectedSurfaceIds.includes(id)
+      ? values.selectedSurfaceIds.filter((s) => s !== id)
+      : [...values.selectedSurfaceIds, id]
+    onChange({ ...values, selectedSurfaceIds: next })
+  }
+
+  function togglePersona(id: string) {
+    const next = values.selectedPersonaIds.includes(id)
+      ? values.selectedPersonaIds.filter((p) => p !== id)
+      : [...values.selectedPersonaIds, id]
+    onChange({ ...values, selectedPersonaIds: next })
+  }
+
+  const surfaceItems = surfaces.map((s) => ({ id: s.id, label: s.name }))
+  const personaItems = personas.map((p) => ({
+    id: p.id,
+    label: p.description ? `${p.name} — ${p.description}` : p.name,
+  }))
 
   return (
     <div className="flex flex-col gap-4">
@@ -114,8 +177,32 @@ export function FeatureBriefForm({ values, onChange, disabled }: Props) {
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:bg-gray-50 disabled:text-gray-400 resize-y"
         />
       </div>
+
+      {/* Surfaces */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">
+          Affected surfaces <span className="text-red-500">*</span>
+        </label>
+        <MultiCheckbox
+          items={surfaceItems}
+          selectedIds={values.selectedSurfaceIds}
+          onToggle={toggleSurface}
+          disabled={disabled}
+        />
+      </div>
+
+      {/* Personas */}
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-gray-700">
+          Affected personas <span className="text-red-500">*</span>
+        </label>
+        <MultiCheckbox
+          items={personaItems}
+          selectedIds={values.selectedPersonaIds}
+          onToggle={togglePersona}
+          disabled={disabled}
+        />
+      </div>
     </div>
   )
 }
-
-export type { FeatureBriefFormState }

@@ -1,7 +1,12 @@
 import type { GenerateRequest } from '@krd-tool/shared'
 
 export function buildUserStoriesPrompt(request: GenerateRequest): string {
-  const personasList = request.personas.map((p, i) => `  ${i + 1}. ${p}`).join('\n')
+  const selectedPersonas = request.profileSnapshot.personas.filter((p) =>
+    request.selectedPersonaIds.includes(p.id),
+  )
+  const personasList = selectedPersonas
+    .map((p, i) => `  ${i + 1}. ${p.name}${p.description ? `: ${p.description}` : ''}`)
+    .join('\n')
 
   return `Write the User Stories section of a Key Requirements Document for the feature described below.
 

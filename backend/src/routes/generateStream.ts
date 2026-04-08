@@ -16,15 +16,23 @@ const SECTION_KEYS: SectionKey[] = [
   'signoff',
 ]
 
-const REQUIRED_FIELDS: (keyof GenerateRequest)[] = [
-  'domainBrief',
-  'surfaces',
-  'personas',
-  'featureName',
-  'problemStatement',
-  'proposedSolution',
-  'v0Scope',
-]
+function validateRequest(body: GenerateRequest): string | null {
+  if (!body.profileSnapshot || typeof body.profileSnapshot !== 'object') {
+    return 'Missing required field: profileSnapshot'
+  }
+  if (!Array.isArray(body.selectedSurfaceIds) || body.selectedSurfaceIds.length === 0) {
+    return 'At least one surface must be selected'
+  }
+  if (!Array.isArray(body.selectedPersonaIds) || body.selectedPersonaIds.length === 0) {
+    return 'At least one persona must be selected'
+  }
+  for (const field of ['featureName', 'problemStatement', 'proposedSolution', 'v0Scope'] as const) {
+    if (!body[field] || body[field].trim() === '') {
+      return `Missing required field: ${field}`
+    }
+  }
+  return null
+}
 
 type SSEPayload =
   | { type: 'section_start'; sectionKey: SectionKey }
@@ -41,19 +49,16 @@ router.post('/', async (req: Request, res: Response) => {
   const body = req.body as GenerateRequest
 
   // Validate required fields — return 400 before opening the stream
-  for (const field of REQUIRED_FIELDS) {
-    const value = body[field]
-    if (!value || (Array.isArray(value) && value.length === 0) || (typeof value === 'string' && value.trim() === '')) {
-      res.status(400).json({ error: `Missing required field: ${field}` })
-      return
-    }
+  const validationError = validateRequest(body)
+  if (validationError) {
+    res.status(400).json({ error: validationError })
+    return
   }
 
   const request: GenerateRequest = {
-    domainBrief: body.domainBrief.trim(),
-    surfaces: body.surfaces.map((s: string) => s.trim()).filter(Boolean),
-    personas: body.personas.map((p: string) => p.trim()).filter(Boolean),
-    techConstraints: (body.techConstraints ?? '').trim(),
+    profileSnapshot: body.profileSnapshot,
+    selectedSurfaceIds: body.selectedSurfaceIds,
+    selectedPersonaIds: body.selectedPersonaIds,
     featureName: body.featureName.trim(),
     problemStatement: body.problemStatement.trim(),
     proposedSolution: body.proposedSolution.trim(),
@@ -68,11 +73,11 @@ router.post('/', async (req: Request, res: Response) => {
   res.setHeader('Connection', 'keep-alive')
   res.setHeader('X-Accel-Buffering', 'no')
   res.flushHeaders()
-  req.socket?.setNoDelay(true)  // disable Nagle — send each token event immediately
+  req.socket?.setNoDelay(true) // disable Nagle — send each token event immediately
 
   // Track disconnection to avoid unnecessary OpenRouter calls
   let connectionClosed = false
-  res.on('close', () => {  // res.on fires on true client disconnect; req.on fires when POST body is consumed
+  res.on('close', () => {
     connectionClosed = true
   })
 

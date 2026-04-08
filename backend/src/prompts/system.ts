@@ -1,25 +1,44 @@
 import type { GenerateRequest } from '@krd-tool/shared'
 
 export function buildSystemPrompt(request: GenerateRequest): string {
-  const surfacesList = request.surfaces.map((s) => `  - ${s}`).join('\n')
-  const personasList = request.personas.map((p) => `  - ${p}`).join('\n')
+  const { profileSnapshot, selectedSurfaceIds, selectedPersonaIds } = request
+
+  // Filter to only the surfaces/personas the user selected for this feature brief
+  const selectedSurfaces = profileSnapshot.surfaces.filter((s) =>
+    selectedSurfaceIds.includes(s.id),
+  )
+  const selectedPersonas = profileSnapshot.personas.filter((p) =>
+    selectedPersonaIds.includes(p.id),
+  )
+
+  const surfacesList = selectedSurfaces.map((s) => `  - ${s.name}`).join('\n')
+  const personasList = selectedPersonas
+    .map((p) => `  - ${p.name}${p.description ? `: ${p.description}` : ''}`)
+    .join('\n')
+
+  const glossaryBlock =
+    profileSnapshot.glossary.length > 0
+      ? `\n## GLOSSARY\n\nUse these domain-specific terms consistently throughout the document:\n\n${profileSnapshot.glossary
+          .map((g) => `  - **${g.term}**: ${g.definition}`)
+          .join('\n')}\n`
+      : ''
 
   return `You are an expert product manager writing a Key Requirements Document (KRD). You write with precision, structure, and depth — producing documents that engineers, designers, and stakeholders can act on immediately.
 
 ## CONTEXT
 
 Domain Brief:
-${request.domainBrief}
+${profileSnapshot.domainBrief || 'Not specified.'}
 
 Surfaces (the product areas this feature touches):
-${surfacesList}
+${surfacesList || '  - (none specified)'}
 
 Personas (the people who use this feature):
-${personasList}
+${personasList || '  - (none specified)'}
 
 Technical Constraints:
-${request.techConstraints || 'None specified.'}
-
+${profileSnapshot.techConstraints || 'None specified.'}
+${glossaryBlock}
 ## TERMINOLOGY RULES
 
 You must use ONLY the surfaces and personas listed above. Never invent new surfaces or personas that are not explicitly listed in the context. If you are asked to reference a surface or persona, use the exact name provided above — do not paraphrase or generalise (e.g. do not substitute "the user" for a named persona, or "the interface" for a named surface).

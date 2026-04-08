@@ -1,7 +1,10 @@
 import type { GenerateRequest } from '@krd-tool/shared'
 
 export function buildOpenQuestionsPrompt(request: GenerateRequest): string {
-  const personasList = request.personas.map((p) => `  - ${p}`).join('\n')
+  const selectedPersonas = request.profileSnapshot.personas.filter((p) =>
+    request.selectedPersonaIds.includes(p.id),
+  )
+  const personasList = selectedPersonas.map((p) => `  - ${p.name}`).join('\n')
 
   return `Write the Open Questions section of a Key Requirements Document for the feature described below.
 
@@ -10,7 +13,7 @@ Problem Statement: ${request.problemStatement}
 Proposed Solution: ${request.proposedSolution}
 V0 Scope: ${request.v0Scope}
 V1 Scope: ${request.v1Scope || 'Not specified.'}
-Technical Constraints: ${request.techConstraints || 'None specified.'}
+Technical Constraints: ${request.profileSnapshot.techConstraints || 'None specified.'}
 
 Personas:
 ${personasList}

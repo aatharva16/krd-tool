@@ -1,13 +1,16 @@
 import type { GenerateRequest } from '@krd-tool/shared'
 
 export function buildNfrPrompt(request: GenerateRequest): string {
-  const surfacesList = request.surfaces.map((s) => `  - ${s}`).join('\n')
+  const selectedSurfaces = request.profileSnapshot.surfaces.filter((s) =>
+    request.selectedSurfaceIds.includes(s.id),
+  )
+  const surfacesList = selectedSurfaces.map((s) => `  - ${s.name}`).join('\n')
 
   return `Write the Non-Functional Requirements section of a Key Requirements Document for the feature described below.
 
 Feature Name: ${request.featureName}
 Proposed Solution: ${request.proposedSolution}
-Technical Constraints: ${request.techConstraints || 'None specified.'}
+Technical Constraints: ${request.profileSnapshot.techConstraints || 'None specified.'}
 
 Surfaces:
 ${surfacesList}

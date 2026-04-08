@@ -1,8 +1,14 @@
 import type { GenerateRequest } from '@krd-tool/shared'
 
 export function buildInstrumentationPrompt(request: GenerateRequest): string {
-  const surfacesList = request.surfaces.map((s) => `  - ${s}`).join('\n')
-  const personasList = request.personas.map((p) => `  - ${p}`).join('\n')
+  const selectedSurfaces = request.profileSnapshot.surfaces.filter((s) =>
+    request.selectedSurfaceIds.includes(s.id),
+  )
+  const selectedPersonas = request.profileSnapshot.personas.filter((p) =>
+    request.selectedPersonaIds.includes(p.id),
+  )
+  const surfacesList = selectedSurfaces.map((s) => `  - ${s.name}`).join('\n')
+  const personasList = selectedPersonas.map((p) => `  - ${p.name}`).join('\n')
 
   return `Write the Instrumentation & Events section of a Key Requirements Document for the feature described below.
 
