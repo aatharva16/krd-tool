@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import healthRouter from './routes/health'
 import generateRouter from './routes/generate'
+import generateStreamRouter from './routes/generateStream'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -12,6 +13,7 @@ app.use(express.json())
 app.use(cors({ origin: CORS_ORIGIN }))
 
 app.use('/health', healthRouter)
+app.use('/api/generate/stream', generateStreamRouter)
 app.use('/api/generate', generateRouter)
 
 app.listen(PORT, () => {
