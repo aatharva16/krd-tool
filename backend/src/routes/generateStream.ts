@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import type { GenerateRequest, SectionKey } from '@krd-tool/shared'
 import { client, MODEL } from '../services/llm'
 import { composePrompt } from '../prompts/composer'
+import { updateSessionStatus, upsertSection } from '../services/sessionService'
 
 const router = Router()
 
@@ -66,6 +67,9 @@ router.post('/', async (req: Request, res: Response) => {
     v1Scope: (body.v1Scope ?? '').trim(),
   }
 
+  // Extract sessionId separately — kept out of the LLM request object intentionally
+  const sessionId: string | null = typeof body.sessionId === 'string' ? body.sessionId : null
+
   // Set SSE headers and flush immediately so the browser starts reading the
   // stream body before the first OpenRouter response arrives.
   res.setHeader('Content-Type', 'text/event-stream')
@@ -82,11 +86,24 @@ router.post('/', async (req: Request, res: Response) => {
   })
 
   try {
+    let hasUpdatedToGenerating = false
+    let sectionContent = ''
+
     for (const sectionKey of SECTION_KEYS) {
       if (connectionClosed) break
 
+      sectionContent = ''
+
       console.log(`[stream] Section start: ${sectionKey}`)
       sendEvent(res, { type: 'section_start', sectionKey })
+
+      // Update session status to 'generating' on the first section (fire-and-forget)
+      if (sessionId && !hasUpdatedToGenerating) {
+        hasUpdatedToGenerating = true
+        updateSessionStatus(sessionId, 'generating').catch((err) => {
+          console.error('[stream] Failed to update session to generating:', err)
+        })
+      }
 
       const { system, user } = composePrompt(request, sectionKey)
 
@@ -103,16 +120,32 @@ router.post('/', async (req: Request, res: Response) => {
         if (connectionClosed) break
         const delta = chunk.choices[0]?.delta?.content ?? ''
         if (delta) {
+          sectionContent += delta // accumulate full content for DB save
           sendEvent(res, { type: 'token', sectionKey, delta })
         }
       }
 
       sendEvent(res, { type: 'section_end', sectionKey })
       console.log(`[stream] Section end: ${sectionKey}`)
+
+      // Auto-save completed section to DB (fire-and-forget)
+      if (sessionId && sectionContent) {
+        const capturedKey = sectionKey
+        const capturedContent = sectionContent
+        upsertSection(sessionId, capturedKey, capturedContent).catch((err) => {
+          console.error(`[stream] Failed to upsert section ${capturedKey}:`, err)
+        })
+      }
     }
 
     if (!connectionClosed) {
       sendEvent(res, { type: 'done' })
+      // Mark session as complete (fire-and-forget)
+      if (sessionId) {
+        updateSessionStatus(sessionId, 'complete').catch((err) => {
+          console.error('[stream] Failed to update session to complete:', err)
+        })
+      }
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error during generation'

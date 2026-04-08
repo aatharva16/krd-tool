@@ -70,8 +70,47 @@ export interface GenerateRequest {
   proposedSolution: string
   v0Scope: string
   v1Scope: string
+  // Optional session ID — when present, backend auto-saves sections to DB
+  sessionId?: string
 }
 
 export interface GenerateResponse {
   sections: Record<SectionKey, string>
 }
+
+// ---------------------------------------------------------------------------
+// Session types
+// ---------------------------------------------------------------------------
+
+export type SessionStatus = 'draft' | 'generating' | 'complete'
+
+export interface KRDSection {
+  id: string
+  sessionId: string
+  sectionKey: SectionKey
+  content: string | null
+  isManuallyEdited: boolean
+  generationCount: number
+  generatedAt: string | null
+  updatedAt: string
+}
+
+export interface KRDSession {
+  id: string
+  profileId: string | null
+  profileSnapshot: Profile
+  featureName: string
+  problemStatement: string
+  proposedSolution: string
+  v0Scope: string
+  v1Scope: string
+  selectedSurfaces: Surface[]
+  selectedPersonas: Persona[]
+  status: SessionStatus
+  createdAt: string
+  updatedAt: string
+  sections?: KRDSection[]
+}
+
+export type CreateSessionRequest = Omit<KRDSession, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'sections'>
+export type UpdateSessionRequest = Partial<Pick<KRDSession, 'status' | 'featureName' | 'problemStatement' | 'proposedSolution' | 'v0Scope' | 'v1Scope'>>

@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { GenerateRequest, SectionKey } from '@krd-tool/shared'
 import { streamGenerateKRD } from '../api/streamClient'
 import { generateKRD } from '../api/client'
+import { getSessionWithSections } from '../api/sessionsClient'
 
 const SECTION_KEYS: SectionKey[] = [
   'overview',
@@ -31,16 +32,37 @@ export interface KRDGenerationState {
   isGenerating: boolean
   error: string | null
   progress: number
+  sessionId: string | null
   generate: (request: GenerateRequest) => Promise<void>
   reset: () => void
 }
 
-export function useKRDGeneration(): KRDGenerationState {
+export function useKRDGeneration(initialSessionId?: string): KRDGenerationState {
   const [sections, setSections] = useState<Record<SectionKey, string>>(EMPTY_SECTIONS)
   const [activeSectionKey, setActiveSectionKey] = useState<SectionKey | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
+  const [sessionId, setSessionId] = useState<string | null>(initialSessionId ?? null)
+
+  // Restore sections from DB when a session ID is provided (e.g. navigating to /generate/:id)
+  useEffect(() => {
+    if (!initialSessionId) return
+    getSessionWithSections(initialSessionId)
+      .then((session) => {
+        if (!session) return
+        const restored: Record<SectionKey, string> = { ...EMPTY_SECTIONS }
+        for (const sec of session.sections ?? []) {
+          if (sec.content) restored[sec.sectionKey] = sec.content
+        }
+        setSections(restored)
+        setProgress(Object.values(restored).filter(Boolean).length)
+        setSessionId(initialSessionId)
+      })
+      .catch((err) => {
+        console.warn('[useKRDGeneration] Failed to restore session:', err)
+      })
+  }, [initialSessionId])
 
   const reset = useCallback(() => {
     setSections(EMPTY_SECTIONS)
@@ -48,6 +70,7 @@ export function useKRDGeneration(): KRDGenerationState {
     setIsGenerating(false)
     setError(null)
     setProgress(0)
+    setSessionId(null)
   }, [])
 
   const generate = useCallback(async (request: GenerateRequest) => {
@@ -56,6 +79,11 @@ export function useKRDGeneration(): KRDGenerationState {
     setSections(EMPTY_SECTIONS)
     setProgress(0)
     setActiveSectionKey(null)
+
+    // Track the session ID for this generation run
+    if (request.sessionId) {
+      setSessionId(request.sessionId)
+    }
 
     let hasReceivedFirstEvent = false
 
@@ -74,6 +102,8 @@ export function useKRDGeneration(): KRDGenerationState {
         onSectionEnd: () => {
           setProgress((p) => p + 1)
           setActiveSectionKey(null)
+          // Section save is handled server-side in generateStream.ts (fire-and-forget)
+          // No client-side upsert here to avoid double-writing
         },
         onDone: () => {
           setIsGenerating(false)
@@ -113,6 +143,7 @@ export function useKRDGeneration(): KRDGenerationState {
     isGenerating,
     error,
     progress,
+    sessionId,
     generate,
     reset,
   }

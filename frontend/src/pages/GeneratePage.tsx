@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import type { GenerateRequest, Profile } from '@krd-tool/shared'
 import { useKRDGeneration } from '../hooks/useKRDGeneration'
 import { FeatureBriefForm, type FeatureBriefFormState } from '../components/FeatureBriefForm'
 import { KRDDisplay } from '../components/KRDDisplay'
 import { useProfileStore } from '../store/profileStore'
+import { createSession, getSessionWithSections } from '../api/sessionsClient'
 
 const EMPTY_BRIEF: FeatureBriefFormState = {
   featureName: '',
@@ -48,26 +49,78 @@ function buildRequest(brief: FeatureBriefFormState, profile: Profile): GenerateR
 }
 
 export function GeneratePage() {
+  const { sessionId: urlSessionId } = useParams<{ sessionId?: string }>()
+  const navigate = useNavigate()
+
   const [brief, setBrief] = useState<FeatureBriefFormState>(EMPTY_BRIEF)
 
-  const { sections, activeSectionKey, isGenerating, error, progress, generate, reset } =
-    useKRDGeneration()
+  const { sections, activeSectionKey, isGenerating, error, progress, sessionId, generate, reset } =
+    useKRDGeneration(urlSessionId)
 
   const getActiveProfile = useProfileStore((s) => s.getActiveProfile)
   const activeProfile = getActiveProfile()
   const hasProfile = activeProfile !== null
 
+  // Restore form fields when navigating to /generate/:sessionId
+  useEffect(() => {
+    if (!urlSessionId) return
+    getSessionWithSections(urlSessionId)
+      .then((session) => {
+        if (!session) return
+        setBrief({
+          featureName: session.featureName,
+          problemStatement: session.problemStatement,
+          proposedSolution: session.proposedSolution,
+          v0Scope: session.v0Scope,
+          v1Scope: session.v1Scope,
+          selectedSurfaceIds: session.selectedSurfaces.map((s) => s.id),
+          selectedPersonaIds: session.selectedPersonas.map((p) => p.id),
+        })
+      })
+      .catch((err) => console.warn('[GeneratePage] Failed to restore form from session:', err))
+  }, [urlSessionId])
+
   const canGenerate = !isGenerating && isFormValid(brief, hasProfile)
   const hasOutput = isGenerating || progress > 0 || activeSectionKey !== null
   const showReset = !isGenerating && (progress > 0 || error !== null)
+  const showViewHistory = !isGenerating && sessionId !== null && progress === 8
+
+  const TOTAL_SECTIONS = 8
 
   async function handleGenerate() {
     if (!activeProfile) return
     const request = buildRequest(brief, activeProfile)
-    await generate(request)
-  }
 
-  const TOTAL_SECTIONS = 8
+    // Create a new session before streaming (or reuse existing session ID from URL)
+    let currentSessionId = sessionId
+    if (!currentSessionId) {
+      try {
+        const session = await createSession({
+          profileId: activeProfile.id,
+          profileSnapshot: activeProfile,
+          featureName: brief.featureName.trim(),
+          problemStatement: brief.problemStatement.trim(),
+          proposedSolution: brief.proposedSolution.trim(),
+          v0Scope: brief.v0Scope.trim(),
+          v1Scope: brief.v1Scope.trim(),
+          selectedSurfaces: activeProfile.surfaces.filter((s) =>
+            brief.selectedSurfaceIds.includes(s.id),
+          ),
+          selectedPersonas: activeProfile.personas.filter((p) =>
+            brief.selectedPersonaIds.includes(p.id),
+          ),
+        })
+        currentSessionId = session.id
+        // Replace URL so the Back button doesn't loop back to the blank generate page
+        navigate(`/generate/${currentSessionId}`, { replace: true })
+      } catch (err) {
+        console.error('[GeneratePage] Failed to create session:', err)
+        // Continue without session — generation still works, just no history saved
+      }
+    }
+
+    await generate({ ...request, sessionId: currentSessionId ?? undefined })
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -137,6 +190,15 @@ export function GeneratePage() {
             >
               Reset
             </button>
+          )}
+
+          {showViewHistory && (
+            <Link
+              to="/history"
+              className="w-full py-2.5 px-4 rounded-lg text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors block"
+            >
+              View in History
+            </Link>
           )}
 
           {isGenerating && (

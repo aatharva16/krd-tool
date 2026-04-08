@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { GeneratePage } from './pages/GeneratePage'
 import { ProfilesPage } from './pages/ProfilesPage'
+import { HistoryPage } from './pages/HistoryPage'
 import { ProfileSelector } from './components/ProfileSelector'
 import { useProfileStore } from './store/profileStore'
 import { getProfiles } from './api/profilesClient'
@@ -50,6 +51,16 @@ function Layout({ children }: { children: React.ReactNode }) {
               >
                 Profiles
               </Link>
+              <Link
+                to="/history"
+                className={`font-medium transition-colors ${
+                  location.pathname === '/history'
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                History
+              </Link>
             </nav>
           </div>
 
@@ -80,6 +91,22 @@ function App() {
           element={
             <Layout>
               <ProfilesPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <Layout>
+              <HistoryPage />
+            </Layout>
+          }
+        />
+        <Route
+          path="/generate/:sessionId"
+          element={
+            <Layout>
+              <GeneratePage />
             </Layout>
           }
         />

@@ -6,6 +6,7 @@ import healthRouter from './routes/health'
 import generateRouter from './routes/generate'
 import generateStreamRouter from './routes/generateStream'
 import profilesRouter from './routes/profiles'
+import sessionsRouter from './routes/sessions'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -15,6 +16,7 @@ app.use(express.json())
 app.use(cors({ origin: CORS_ORIGIN }))
 
 app.use('/health', healthRouter)
+app.use('/api/sessions', sessionsRouter)
 app.use('/api/generate/stream', generateStreamRouter)
 app.use('/api/generate', generateRouter)
 app.use('/api/profiles', profilesRouter)
