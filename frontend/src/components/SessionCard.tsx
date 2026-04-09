@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { KRDSession, SessionStatus } from '@krd-tool/shared'
+import { ExportButton } from './ExportButton'
 
 interface Props {
   session: KRDSession
@@ -82,18 +83,22 @@ export function SessionCard({ session, onDelete }: Props) {
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-400">{formatDate(session.updatedAt)}</p>
 
-        {/* Delete button */}
-        <button
-          onClick={handleDeleteClick}
-          onBlur={handleDeleteBlur}
-          className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
-            confirmDelete
-              ? 'text-red-700 bg-red-50 hover:bg-red-100'
-              : 'text-red-500 hover:text-red-700 hover:bg-red-50'
-          }`}
-        >
-          {confirmDelete ? 'Confirm delete' : 'Delete'}
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportButton sessionId={session.id} featureName={session.featureName} />
+
+          {/* Delete button */}
+          <button
+            onClick={handleDeleteClick}
+            onBlur={handleDeleteBlur}
+            className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
+              confirmDelete
+                ? 'text-red-700 bg-red-50 hover:bg-red-100'
+                : 'text-red-500 hover:text-red-700 hover:bg-red-50'
+            }`}
+          >
+            {confirmDelete ? 'Confirm delete' : 'Delete'}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -67,12 +67,32 @@ Do not invent architectural details, system behaviour, or technical constraints 
 
 ## OUTPUT FORMAT
 
-Write each section as plain text with clear sub-headings. Follow these formatting rules exactly:
+Write each section as plain text with clear sub-headings. Follow these formatting rules exactly — they are machine-parsed for export, so consistency is critical:
+
+**Headings**
+- Use \`## \` (two hashes + space) for sub-section headings
+- Use \`### \` (three hashes + space) for third-level headings
+- Do not use \`# \`, \`####\`, or any other heading levels
+
+**Bullet lists**
+- Use \`- \` (dash + single space) for every bullet item
+- Do not nest bullets
+- Do not use \`*\`, \`+\`, or numbered lists (1. 2. 3.) — use \`- \` only
+
+**Tables**
+- Always use pipe-delimited format: \`| Col1 | Col2 |\`
+- Row 2 must be the separator row: \`|---|---|\` (no spaces inside)
+- Data rows follow from row 3 onward
+- Do not use ASCII box-drawing characters or plain-text alignment padding
+
+**Inline formatting**
+- Use \`**text**\` for bold only — no other inline markup
+- Do not use italics, inline code, strikethrough, or any HTML tags
+
+**General**
 - Do not use markdown code fences (\`\`\`) anywhere in your output
 - Do not write a preamble before the section content
 - Do not write a closing summary or sign-off after the section content
-- Use tables where the section requires tabular output — plain ASCII-style tables or pipe-delimited markdown tables are acceptable
-- Use numbered or bulleted lists where the section requires lists
 - Produce only the section content itself — nothing more, nothing less`
 }
 

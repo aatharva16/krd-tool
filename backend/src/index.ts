@@ -8,6 +8,7 @@ import generateStreamRouter from './routes/generateStream'
 import generateSectionRouter from './routes/generateSection'
 import profilesRouter from './routes/profiles'
 import sessionsRouter from './routes/sessions'
+import exportRouter from './routes/export'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -22,6 +23,7 @@ app.use('/api/generate/section', generateSectionRouter)
 app.use('/api/generate/stream', generateStreamRouter)
 app.use('/api/generate', generateRouter)
 app.use('/api/profiles', profilesRouter)
+app.use('/api/export', exportRouter)
 
 app.listen(PORT, () => {
   console.log(`Backend running on port ${PORT}`)

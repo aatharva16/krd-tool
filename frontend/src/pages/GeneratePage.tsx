@@ -7,6 +7,7 @@ import { KRDDisplay } from '../components/KRDDisplay'
 import { useProfileStore } from '../store/profileStore'
 import { useSessionStore } from '../store/sessionStore'
 import { createSession, getSessionWithSections } from '../api/sessionsClient'
+import { ExportButton } from '../components/ExportButton'
 
 const EMPTY_BRIEF: FeatureBriefFormState = {
   featureName: '',
@@ -231,11 +232,22 @@ export function GeneratePage() {
         {/* Right column — output */}
         <div className="flex-1 min-w-0">
           {hasOutput ? (
-            <KRDDisplay
-              activeSectionKey={activeSectionKey}
-              sessionId={sessionId}
-              isFullGenerating={isGenerating}
-            />
+            <>
+              {sessionId && progress > 0 && (
+                <div className="flex justify-end mb-3">
+                  <ExportButton
+                    sessionId={sessionId}
+                    featureName={brief.featureName}
+                    disabled={isGenerating || isSectionGenerating}
+                  />
+                </div>
+              )}
+              <KRDDisplay
+                activeSectionKey={activeSectionKey}
+                sessionId={sessionId}
+                isFullGenerating={isGenerating}
+              />
+            </>
           ) : (
             !isGenerating && (
               <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed border-gray-200 text-sm text-gray-400">

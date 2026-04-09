@@ -132,3 +132,15 @@ export interface UpsertSectionRequest {
   content: string
   isManuallyEdited: boolean
 }
+
+// ---------------------------------------------------------------------------
+// Phase 5 — Export types
+// ---------------------------------------------------------------------------
+
+export interface ExportRequest {
+  sessionId: string
+}
+
+export interface ExportError {
+  error: string
+}
