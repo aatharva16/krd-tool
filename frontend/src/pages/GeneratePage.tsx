@@ -56,7 +56,7 @@ export function GeneratePage() {
 
   const [brief, setBrief] = useState<FeatureBriefFormState>(EMPTY_BRIEF)
 
-  const { sections, activeSectionKey, isGenerating, error, progress, sessionId, generate, reset } =
+  const { activeSectionKey, isGenerating, error, progress, sessionId, generate, reset } =
     useKRDGeneration(urlSessionId)
 
   const getActiveProfile = useProfileStore((s) => s.getActiveProfile)

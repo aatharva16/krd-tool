@@ -4,7 +4,7 @@ interface FieldDef {
   placeholder: string
 }
 
-interface Props<T extends Record<string, string>> {
+interface Props<T extends object> {
   value: T[]
   onChange: (updated: T[]) => void
   fields: FieldDef[]
@@ -14,7 +14,7 @@ interface Props<T extends Record<string, string>> {
   disabled?: boolean
 }
 
-export function MultiValueInput<T extends Record<string, string>>({
+export function MultiValueInput<T extends object>({
   value,
   onChange,
   fields,
@@ -49,7 +49,7 @@ export function MultiValueInput<T extends Record<string, string>>({
               key={field.key}
               type="text"
               disabled={disabled}
-              value={item[field.key] ?? ''}
+              value={(item as Record<string, string | undefined>)[field.key] ?? ''}
               onChange={(e) => updateItem(index, field.key, e.target.value)}
               placeholder={field.placeholder}
               className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:bg-gray-50 disabled:text-gray-400"
