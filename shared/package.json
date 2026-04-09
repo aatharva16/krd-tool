@@ -2,9 +2,6 @@
   "name": "@krd-tool/shared",
   "version": "0.1.0",
   "private": true,
-  "main": "./dist/types.js",
-  "types": "./types.ts",
-  "scripts": {
-    "build": "tsc"
-  }
+  "main": "./types.js",
+  "types": "./types.ts"
 }
