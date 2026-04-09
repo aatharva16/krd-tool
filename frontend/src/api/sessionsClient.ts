@@ -57,11 +57,12 @@ export async function upsertSection(
   sessionId: string,
   sectionKey: SectionKey,
   content: string,
+  isManuallyEdited: boolean,
 ): Promise<KRDSection> {
   const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/sections/${sectionKey}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ content, isManuallyEdited }),
   })
   return handleResponse<KRDSection>(res)
 }

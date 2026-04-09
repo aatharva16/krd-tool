@@ -141,12 +141,14 @@ export async function upsertSection(
   sessionId: string,
   sectionKey: SectionKey,
   content: string,
+  isManuallyEdited: boolean = false,
 ): Promise<KRDSection> {
   // Use the atomic RPC function to correctly increment generation_count
   const { data, error } = await supabase.rpc('upsert_krd_section', {
     p_session_id: sessionId,
     p_section_key: sectionKey,
     p_content: content,
+    p_is_manually_edited: isManuallyEdited,
   })
 
   if (error) throw new Error(`upsertSection: ${error.message}`)

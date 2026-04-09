@@ -5,6 +5,7 @@ import cors from 'cors'
 import healthRouter from './routes/health'
 import generateRouter from './routes/generate'
 import generateStreamRouter from './routes/generateStream'
+import generateSectionRouter from './routes/generateSection'
 import profilesRouter from './routes/profiles'
 import sessionsRouter from './routes/sessions'
 
@@ -17,6 +18,7 @@ app.use(cors({ origin: CORS_ORIGIN }))
 
 app.use('/health', healthRouter)
 app.use('/api/sessions', sessionsRouter)
+app.use('/api/generate/section', generateSectionRouter)
 app.use('/api/generate/stream', generateStreamRouter)
 app.use('/api/generate', generateRouter)
 app.use('/api/profiles', profilesRouter)

@@ -14,6 +14,7 @@ import {
   UpsertSectionSchema,
   validateBody,
 } from '../validators/sessionValidator'
+import { SECTION_KEYS } from '@krd-tool/shared'
 import type { SectionKey } from '@krd-tool/shared'
 
 const router = Router()
@@ -102,6 +103,11 @@ router.delete('/:id', async (req: Request<ParamsDictionary>, res: Response) => {
 
 // PATCH /api/sessions/:id/sections/:key — upsert a single section
 router.patch('/:id/sections/:key', async (req: Request<ParamsDictionary>, res: Response) => {
+  const sectionKey = String(req.params.key)
+  if (!(SECTION_KEYS as readonly string[]).includes(sectionKey)) {
+    res.status(400).json({ error: `Invalid sectionKey: "${sectionKey}"` })
+    return
+  }
   const data = validateBody(UpsertSectionSchema, req.body)
   if (!data) {
     res.status(400).json({ error: 'Invalid request body — content is required' })
@@ -110,8 +116,9 @@ router.patch('/:id/sections/:key', async (req: Request<ParamsDictionary>, res: R
   try {
     const section = await upsertSection(
       String(req.params.id),
-      String(req.params.key) as SectionKey,
+      sectionKey as SectionKey,
       data.content,
+      data.isManuallyEdited,
     )
     res.json(section)
   } catch (err) {

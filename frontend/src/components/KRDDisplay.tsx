@@ -1,4 +1,5 @@
 import type { SectionKey } from '@krd-tool/shared'
+import { useSessionStore } from '../store/sessionStore'
 import { SectionBlock } from './SectionBlock'
 
 const SECTION_TITLES: Record<SectionKey, string> = {
@@ -24,8 +25,9 @@ const SECTION_ORDER: SectionKey[] = [
 ]
 
 interface Props {
-  sections: Record<SectionKey, string>
   activeSectionKey: SectionKey | null
+  sessionId: string | null
+  isFullGenerating: boolean
 }
 
 type PillState = 'pending' | 'active' | 'complete'
@@ -53,7 +55,10 @@ const PILL_LABELS: Record<SectionKey, string> = {
   signoff: 'Sign-off',
 }
 
-export function KRDDisplay({ sections, activeSectionKey }: Props) {
+export function KRDDisplay({ activeSectionKey, sessionId, isFullGenerating }: Props) {
+  const { sections, regeneratingSectionKey, isManuallyEdited, isAnyGenerating } = useSessionStore()
+  const anyGenerating = isAnyGenerating()
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -63,7 +68,8 @@ export function KRDDisplay({ sections, activeSectionKey }: Props) {
       {/* Progress indicator */}
       <div className="flex flex-wrap gap-1.5">
         {SECTION_ORDER.map((key) => {
-          const state = getPillState(key, sections, activeSectionKey)
+          const isRegenerating = regeneratingSectionKey === key
+          const state = isRegenerating ? 'active' : getPillState(key, sections, activeSectionKey)
           return (
             <span
               key={key}
@@ -81,7 +87,12 @@ export function KRDDisplay({ sections, activeSectionKey }: Props) {
           key={key}
           title={SECTION_TITLES[key]}
           content={sections[key]}
-          isActive={key === activeSectionKey}
+          isActive={key === activeSectionKey || regeneratingSectionKey === key}
+          sectionKey={key}
+          sessionId={sessionId}
+          isManuallyEdited={isManuallyEdited[key]}
+          isAnyGenerating={anyGenerating}
+          isFullGenerating={isFullGenerating}
         />
       ))}
     </div>

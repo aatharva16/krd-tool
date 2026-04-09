@@ -1,15 +1,18 @@
 // Shared TypeScript types for KRD Tool
 // Single source of truth for types used by both frontend and backend.
 
-export type SectionKey =
-  | 'overview'
-  | 'userStories'
-  | 'requirements'
-  | 'nfr'
-  | 'instrumentation'
-  | 'testing'
-  | 'openQuestions'
-  | 'signoff'
+export const SECTION_KEYS = [
+  'overview',
+  'userStories',
+  'requirements',
+  'nfr',
+  'instrumentation',
+  'testing',
+  'openQuestions',
+  'signoff',
+] as const
+
+export type SectionKey = typeof SECTION_KEYS[number]
 
 // ---------------------------------------------------------------------------
 // Profile types
@@ -114,3 +117,18 @@ export interface KRDSession {
 
 export type CreateSessionRequest = Omit<KRDSession, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'sections'>
 export type UpdateSessionRequest = Partial<Pick<KRDSession, 'status' | 'featureName' | 'problemStatement' | 'proposedSolution' | 'v0Scope' | 'v1Scope'>>
+
+// ---------------------------------------------------------------------------
+// Phase 4 — Refinement types
+// ---------------------------------------------------------------------------
+
+export interface GenerateSectionRequest {
+  sessionId: string
+  sectionKey: SectionKey
+  refineInstruction?: string
+}
+
+export interface UpsertSectionRequest {
+  content: string
+  isManuallyEdited: boolean
+}

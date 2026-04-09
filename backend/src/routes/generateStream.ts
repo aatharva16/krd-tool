@@ -132,7 +132,7 @@ router.post('/', async (req: Request, res: Response) => {
       if (sessionId && sectionContent) {
         const capturedKey = sectionKey
         const capturedContent = sectionContent
-        upsertSection(sessionId, capturedKey, capturedContent).catch((err) => {
+        upsertSection(sessionId, capturedKey, capturedContent, false).catch((err) => {
           console.error(`[stream] Failed to upsert section ${capturedKey}:`, err)
         })
       }

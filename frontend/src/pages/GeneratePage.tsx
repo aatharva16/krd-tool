@@ -5,6 +5,7 @@ import { useKRDGeneration } from '../hooks/useKRDGeneration'
 import { FeatureBriefForm, type FeatureBriefFormState } from '../components/FeatureBriefForm'
 import { KRDDisplay } from '../components/KRDDisplay'
 import { useProfileStore } from '../store/profileStore'
+import { useSessionStore } from '../store/sessionStore'
 import { createSession, getSessionWithSections } from '../api/sessionsClient'
 
 const EMPTY_BRIEF: FeatureBriefFormState = {
@@ -61,6 +62,9 @@ export function GeneratePage() {
   const activeProfile = getActiveProfile()
   const hasProfile = activeProfile !== null
 
+  const regeneratingSectionKey = useSessionStore((s) => s.regeneratingSectionKey)
+  const isSectionGenerating = regeneratingSectionKey !== null && regeneratingSectionKey !== '__full__'
+
   // Restore form fields when navigating to /generate/:sessionId
   useEffect(() => {
     if (!urlSessionId) return
@@ -80,7 +84,7 @@ export function GeneratePage() {
       .catch((err) => console.warn('[GeneratePage] Failed to restore form from session:', err))
   }, [urlSessionId])
 
-  const canGenerate = !isGenerating && isFormValid(brief, hasProfile)
+  const canGenerate = !isGenerating && !isSectionGenerating && isFormValid(brief, hasProfile)
   const hasOutput = isGenerating || progress > 0 || activeSectionKey !== null
   const showReset = !isGenerating && (progress > 0 || error !== null)
   const showViewHistory = !isGenerating && sessionId !== null && progress === 8
@@ -180,7 +184,11 @@ export function GeneratePage() {
             disabled={!canGenerate}
             className="w-full py-3 px-4 rounded-lg text-sm font-semibold text-white bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
-            {isGenerating ? 'Generating…' : 'Generate KRD'}
+            {isGenerating
+              ? 'Generating…'
+              : isSectionGenerating
+                ? 'Generation in progress…'
+                : 'Generate KRD'}
           </button>
 
           {showReset && (
@@ -223,7 +231,11 @@ export function GeneratePage() {
         {/* Right column — output */}
         <div className="flex-1 min-w-0">
           {hasOutput ? (
-            <KRDDisplay sections={sections} activeSectionKey={activeSectionKey} />
+            <KRDDisplay
+              activeSectionKey={activeSectionKey}
+              sessionId={sessionId}
+              isFullGenerating={isGenerating}
+            />
           ) : (
             !isGenerating && (
               <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed border-gray-200 text-sm text-gray-400">

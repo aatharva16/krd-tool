@@ -1,4 +1,4 @@
-import type { GenerateRequest } from '@krd-tool/shared'
+import type { GenerateRequest, KRDSession } from '@krd-tool/shared'
 
 export function buildSystemPrompt(request: GenerateRequest): string {
   const { profileSnapshot, selectedSurfaceIds, selectedPersonaIds } = request
@@ -74,4 +74,19 @@ Write each section as plain text with clear sub-headings. Follow these formattin
 - Use tables where the section requires tabular output — plain ASCII-style tables or pipe-delimited markdown tables are acceptable
 - Use numbered or bulleted lists where the section requires lists
 - Produce only the section content itself — nothing more, nothing less`
+}
+
+// Builds the same system prompt from a stored KRDSession (used by /api/generate/section)
+export function buildSystemPromptFromSession(session: KRDSession): string {
+  const syntheticRequest: GenerateRequest = {
+    profileSnapshot: session.profileSnapshot,
+    selectedSurfaceIds: session.selectedSurfaces.map((s) => s.id),
+    selectedPersonaIds: session.selectedPersonas.map((p) => p.id),
+    featureName: session.featureName,
+    problemStatement: session.problemStatement,
+    proposedSolution: session.proposedSolution,
+    v0Scope: session.v0Scope,
+    v1Scope: session.v1Scope,
+  }
+  return buildSystemPrompt(syntheticRequest)
 }

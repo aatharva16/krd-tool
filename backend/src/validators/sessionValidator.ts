@@ -49,6 +49,7 @@ export const UpdateSessionSchema = z.object({
 
 export const UpsertSectionSchema = z.object({
   content: z.string(),
+  isManuallyEdited: z.boolean().optional().default(false),
 })
 
 export type ValidatedCreateSession = z.infer<typeof CreateSessionSchema>
