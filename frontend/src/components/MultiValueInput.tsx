@@ -43,7 +43,7 @@ export function MultiValueInput<T extends object>({
   return (
     <div className="flex flex-col gap-2">
       {value.map((item, index) => (
-        <div key={withId ? item.id : index} className="flex gap-2 items-start">
+        <div key={withId ? (item as Record<string, string>).id : index} className="flex gap-2 items-start">
           {fields.map((field) => (
             <input
               key={field.key}
